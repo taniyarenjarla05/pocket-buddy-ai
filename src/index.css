@@ -6,33 +6,33 @@
 
 @layer base {
   :root {
-    --background: 230 35% 7%;
-    --foreground: 210 40% 92%;
+    --background: 260 30% 8%;
+    --foreground: 240 20% 90%;
 
-    --card: 230 30% 12%;
-    --card-foreground: 210 40% 92%;
+    --card: 265 25% 13%;
+    --card-foreground: 240 20% 90%;
 
-    --popover: 230 30% 12%;
-    --popover-foreground: 210 40% 92%;
+    --popover: 265 25% 13%;
+    --popover-foreground: 240 20% 90%;
 
-    --primary: 174 72% 56%;
-    --primary-foreground: 230 35% 7%;
+    --primary: 270 60% 65%;
+    --primary-foreground: 260 30% 8%;
 
-    --secondary: 250 60% 65%;
-    --secondary-foreground: 210 40% 96%;
+    --secondary: 280 45% 55%;
+    --secondary-foreground: 240 20% 96%;
 
-    --muted: 230 25% 18%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 260 20% 18%;
+    --muted-foreground: 250 15% 55%;
 
     --accent: 340 75% 60%;
-    --accent-foreground: 210 40% 96%;
+    --accent-foreground: 240 20% 96%;
 
     --destructive: 0 72% 55%;
-    --destructive-foreground: 210 40% 96%;
+    --destructive-foreground: 240 20% 96%;
 
-    --border: 230 25% 20%;
-    --input: 230 25% 18%;
-    --ring: 174 72% 56%;
+    --border: 260 20% 22%;
+    --input: 260 20% 18%;
+    --ring: 270 60% 65%;
 
     --radius: 1rem;
 
@@ -40,20 +40,20 @@
     --warning: 38 92% 60%;
     --info: 210 80% 60%;
 
-    --glass-bg: 230 30% 14%;
-    --glass-border: 230 25% 25%;
+    --glass-bg: 265 25% 14%;
+    --glass-border: 260 20% 26%;
 
-    --gradient-start: 250 60% 55%;
-    --gradient-end: 174 72% 46%;
+    --gradient-start: 280 50% 50%;
+    --gradient-end: 260 60% 70%;
 
-    --sidebar-background: 230 30% 10%;
-    --sidebar-foreground: 210 40% 92%;
-    --sidebar-primary: 174 72% 56%;
-    --sidebar-primary-foreground: 230 35% 7%;
-    --sidebar-accent: 230 25% 18%;
-    --sidebar-accent-foreground: 210 40% 92%;
-    --sidebar-border: 230 25% 20%;
-    --sidebar-ring: 174 72% 56%;
+    --sidebar-background: 260 25% 10%;
+    --sidebar-foreground: 240 20% 90%;
+    --sidebar-primary: 270 60% 65%;
+    --sidebar-primary-foreground: 260 30% 8%;
+    --sidebar-accent: 260 20% 18%;
+    --sidebar-accent-foreground: 240 20% 90%;
+    --sidebar-border: 260 20% 22%;
+    --sidebar-ring: 270 60% 65%;
   }
 }
 
@@ -107,7 +107,7 @@
   }
 
   .phone-shadow {
-    box-shadow: 0 25px 60px -15px hsl(230 50% 5% / 0.8),
+    box-shadow: 0 25px 60px -15px hsl(260 40% 5% / 0.8),
                 0 0 40px hsl(var(--primary) / 0.1);
   }
 
