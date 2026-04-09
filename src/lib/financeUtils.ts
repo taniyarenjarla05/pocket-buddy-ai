@@ -211,6 +211,46 @@ export function getSmartInsights(expenses: Expense[], user: UserData): string[] 
   return insights;
 }
 
+export function getYearlySpending(expenses: Expense[]): number {
+  const y = new Date().getFullYear();
+  return expenses
+    .filter((e) => new Date(e.date).getFullYear() === y)
+    .reduce((s, e) => s + e.amount, 0);
+}
+
+export function getSavingsTips(expenses: Expense[], user: UserData): string[] {
+  const tips: string[] = [];
+  const cats = getCategoryTotals(expenses);
+  const total = Object.values(cats).reduce((a, b) => a + b, 0);
+  if (total === 0) return ["Start tracking expenses to get saving tips!"];
+
+  const sorted = Object.entries(cats).sort(([, a], [, b]) => b - a);
+  if (sorted[0]) {
+    const pct = Math.round((sorted[0][1] / total) * 100);
+    if (pct > 30) tips.push(`Cut ${sorted[0][0]} spending (${pct}% of total) — try reducing by 20%`);
+  }
+
+  const subs = expenses.filter((e) => e.isSubscription);
+  if (subs.length > 0) {
+    const subTotal = subs.reduce((s, e) => s + e.amount, 0);
+    tips.push(`Review subscriptions — ₹${subTotal.toLocaleString()} spent on recurring costs`);
+  }
+
+  if (cats["Shopping"] && cats["Shopping"] > total * 0.2) {
+    tips.push("Reduce impulse shopping — set a weekly shopping budget");
+  }
+  if (cats["Food"] && cats["Food"] > total * 0.35) {
+    tips.push("Cook more meals at home to cut food spending");
+  }
+
+  if (user.userType === "student") {
+    tips.push("Use student discounts and campus facilities to save");
+  }
+
+  if (tips.length === 0) tips.push("You're doing great! Keep tracking to find more savings.");
+  return tips;
+}
+
 // Load CSV sample data
 export async function loadSampleData(): Promise<Expense[]> {
   try {

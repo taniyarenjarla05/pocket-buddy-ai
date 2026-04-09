@@ -1,11 +1,12 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Receipt, Brain, User } from "lucide-react";
+import { LayoutDashboard, Receipt, Brain, User, CalendarDays } from "lucide-react";
 
 const tabs = [
   { path: "/dashboard", icon: LayoutDashboard, label: "Home" },
   { path: "/expenses", icon: Receipt, label: "Expenses" },
+  { path: "/calendar", icon: CalendarDays, label: "Calendar" },
   { path: "/predictions", icon: Brain, label: "AI" },
   { path: "/profile", icon: User, label: "Profile" },
 ];

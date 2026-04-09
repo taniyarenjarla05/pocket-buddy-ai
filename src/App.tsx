@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Expenses from "./pages/Expenses.tsx";
 import AIPrediction from "./pages/AIPrediction.tsx";
 import Profile from "./pages/Profile.tsx";
+import CalendarView from "./pages/CalendarView.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/expenses" element={<Expenses />} />
+            <Route path="/calendar" element={<CalendarView />} />
             <Route path="/predictions" element={<AIPrediction />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />
