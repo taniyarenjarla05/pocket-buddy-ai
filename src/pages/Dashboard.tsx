@@ -179,7 +179,7 @@ const Dashboard: React.FC = () => {
               <AlertTriangle className="w-5 h-5 text-accent animate-pulse" />
               <span className="font-heading font-semibold text-accent text-sm">Overspending Alert!</span>
             </div>
-            {dailyOver && <p className="text-xs text-foreground/80">Daily: ₹{todaySpent} / ₹{limits.daily} limit</p>}
+            {dailyOver && <p className="text-xs text-foreground/80">Daily: ₹{todaySpent} / ₹{budgetLimits.daily} limit</p>}
             {weeklyOver && <p className="text-xs text-foreground/80">Weekly: ₹{weekSpent} / ₹{budgetLimits.weekly} limit</p>}
           </GlassCard>
         )}
