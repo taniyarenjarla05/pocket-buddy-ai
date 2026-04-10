@@ -1,32 +1,85 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Wallet, TrendingDown, PiggyBank, AlertTriangle, Lightbulb, Download, Calendar as CalIcon, TrendingUp,
+  Wallet, TrendingDown, PiggyBank, AlertTriangle, Lightbulb, Download, TrendingUp,
 } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import GlassCard from "@/components/GlassCard";
 import {
-  getUser, getExpenses, getMonthlySpending, getTodaySpending,
-  getSmartInsights, getBudgetLimits, getWeekSpending,
+  getMonthlySpending, getTodaySpending,
+  getSmartInsights, getWeekSpending,
   loadSampleData, getYearlySpending, getSavingsTips,
   type Expense, type UserData,
 } from "@/lib/financeUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user: authUser, loading: authLoading } = useAuth();
   const [user, setUser] = useState<UserData | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [time, setTime] = useState(new Date());
+  const [budgetLimits, setBudgetLimits] = useState({ daily: 1000, weekly: 5000 });
 
   useEffect(() => {
-    const u = getUser();
-    if (!u) { navigate("/"); return; }
-    setUser(u);
-    setExpenses(getExpenses());
-  }, [navigate]);
+    if (authLoading) return;
+    if (!authUser) { navigate("/"); return; }
+
+    const loadData = async () => {
+      // Load profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .single();
+
+      if (profile) {
+        setUser({
+          name: profile.name || authUser.user_metadata?.name || "User",
+          email: profile.email || authUser.email || "",
+          monthlyIncome: Number(profile.monthly_income) || 0,
+          hostelRent: Number(profile.hostel_rent) || 0,
+          userType: profile.user_type === "professional" ? "professional" : "student",
+        });
+      }
+
+      // Load expenses
+      const { data: expData } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .order("date", { ascending: false });
+
+      if (expData) {
+        setExpenses(expData.map((e: any) => ({
+          id: e.id,
+          date: e.date,
+          amount: Number(e.amount),
+          category: e.category,
+          mood: e.mood,
+          paymentMode: e.payment_mode,
+          isSubscription: e.is_subscription,
+        })));
+      }
+
+      // Load budget limits
+      const { data: limits } = await supabase
+        .from("budget_limits")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .single();
+
+      if (limits) {
+        setBudgetLimits({ daily: Number(limits.daily_limit), weekly: Number(limits.weekly_limit) });
+      }
+    };
+
+    loadData();
+  }, [authUser, authLoading, navigate]);
 
   // Real-time clock
   useEffect(() => {
@@ -36,8 +89,21 @@ const Dashboard: React.FC = () => {
 
   const handleLoadSample = async () => {
     const data = await loadSampleData();
-    setExpenses(data);
-    toast({ title: `Loaded ${data.length} sample transactions 📊` });
+    if (authUser && data.length > 0) {
+      // Insert into database
+      const rows = data.map((e) => ({
+        user_id: authUser.id,
+        date: e.date,
+        amount: e.amount,
+        category: e.category,
+        mood: e.mood,
+        payment_mode: e.paymentMode,
+        is_subscription: e.isSubscription,
+      }));
+      await supabase.from("expenses").insert(rows);
+      setExpenses(data);
+      toast({ title: `Loaded ${data.length} sample transactions 📊` });
+    }
   };
 
   if (!user) return null;
@@ -49,9 +115,8 @@ const Dashboard: React.FC = () => {
   const availableBalance = user.monthlyIncome - (user.hostelRent || 0) - monthlySpent;
   const todaySpent = getTodaySpending(expenses);
   const weekSpent = getWeekSpending(expenses);
-  const limits = getBudgetLimits();
-  const dailyOver = todaySpent > limits.daily;
-  const weeklyOver = weekSpent > limits.weekly;
+  const dailyOver = todaySpent > budgetLimits.daily;
+  const weeklyOver = weekSpent > budgetLimits.weekly;
   const insights = getSmartInsights(expenses, user);
   const savingsTips = getSavingsTips(expenses, user);
 
@@ -114,8 +179,8 @@ const Dashboard: React.FC = () => {
               <AlertTriangle className="w-5 h-5 text-accent animate-pulse" />
               <span className="font-heading font-semibold text-accent text-sm">Overspending Alert!</span>
             </div>
-            {dailyOver && <p className="text-xs text-foreground/80">Daily: ₹{todaySpent} / ₹{limits.daily} limit</p>}
-            {weeklyOver && <p className="text-xs text-foreground/80">Weekly: ₹{weekSpent} / ₹{limits.weekly} limit</p>}
+            {dailyOver && <p className="text-xs text-foreground/80">Daily: ₹{todaySpent} / ₹{budgetLimits.daily} limit</p>}
+            {weeklyOver && <p className="text-xs text-foreground/80">Weekly: ₹{weekSpent} / ₹{budgetLimits.weekly} limit</p>}
           </GlassCard>
         )}
 

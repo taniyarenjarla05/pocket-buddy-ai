@@ -4,11 +4,12 @@ import { Plus, Trash2, Search, X } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import GlassCard from "@/components/GlassCard";
 import {
-  getExpenses, addExpense, deleteExpense, type Expense,
-  getBudgetLimits, getTodaySpending, getWeekSpending,
-  incrementAlertCount,
+  type Expense,
+  getTodaySpending, getWeekSpending,
 } from "@/lib/financeUtils";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const categories = ["Food", "Travel", "Shopping", "Bills", "Others"];
 const moods = ["Happy", "Neutral", "Sad", "Stressed"];
@@ -19,46 +20,93 @@ const categoryEmojis: Record<string, string> = {
 
 const Expenses: React.FC = () => {
   const { toast } = useToast();
+  const { user: authUser } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({ amount: "", category: "Food", mood: "Neutral", paymentMode: "UPI", isSubscription: false });
+  const [budgetLimits, setBudgetLimits] = useState({ daily: 1000, weekly: 5000 });
 
-  useEffect(() => { setExpenses(getExpenses()); }, []);
+  useEffect(() => {
+    if (!authUser) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .order("date", { ascending: false });
+      if (data) {
+        setExpenses(data.map((e: any) => ({
+          id: e.id,
+          date: e.date,
+          amount: Number(e.amount),
+          category: e.category,
+          mood: e.mood,
+          paymentMode: e.payment_mode,
+          isSubscription: e.is_subscription,
+        })));
+      }
+      const { data: limits } = await supabase
+        .from("budget_limits")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .single();
+      if (limits) {
+        setBudgetLimits({ daily: Number(limits.daily_limit), weekly: Number(limits.weekly_limit) });
+      }
+    };
+    load();
+  }, [authUser]);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.amount || Number(form.amount) <= 0) {
       toast({ title: "Enter a valid amount", variant: "destructive" });
       return;
     }
-    const newExp: Omit<Expense, "id"> = {
+    if (!authUser) return;
+
+    const { data, error } = await supabase.from("expenses").insert({
+      user_id: authUser.id,
       date: new Date().toISOString().split("T")[0],
       amount: Number(form.amount),
       category: form.category,
       mood: form.mood,
-      paymentMode: form.paymentMode,
-      isSubscription: form.isSubscription,
+      payment_mode: form.paymentMode,
+      is_subscription: form.isSubscription,
+    }).select().single();
+
+    if (error) {
+      toast({ title: "Failed to add expense", variant: "destructive" });
+      return;
+    }
+
+    const newExp: Expense = {
+      id: data.id,
+      date: data.date,
+      amount: Number(data.amount),
+      category: data.category,
+      mood: data.mood,
+      paymentMode: data.payment_mode,
+      isSubscription: data.is_subscription,
     };
-    const updated = addExpense(newExp);
+    const updated = [newExp, ...expenses];
     setExpenses(updated);
     setShowAdd(false);
     setForm({ amount: "", category: "Food", mood: "Neutral", paymentMode: "UPI", isSubscription: false });
 
     // Check limits
-    const limits = getBudgetLimits();
     const todayTotal = getTodaySpending(updated);
     const weekTotal = getWeekSpending(updated);
-    if (todayTotal > limits.daily || weekTotal > limits.weekly) {
-      incrementAlertCount();
+    if (todayTotal > budgetLimits.daily || weekTotal > budgetLimits.weekly) {
       toast({ title: "⚠️ You are overspending!", description: "Consider reducing today's spending", variant: "destructive" });
     } else {
       toast({ title: "Expense added ✅" });
     }
   };
 
-  const handleDelete = (id: string) => {
-    const updated = deleteExpense(id);
-    setExpenses(updated);
+  const handleDelete = async (id: string) => {
+    await supabase.from("expenses").delete().eq("id", id);
+    setExpenses(expenses.filter((e) => e.id !== id));
     toast({ title: "Expense deleted" });
   };
 

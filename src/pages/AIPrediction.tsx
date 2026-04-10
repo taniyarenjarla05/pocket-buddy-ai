@@ -4,10 +4,12 @@ import { Brain, TrendingUp } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import GlassCard from "@/components/GlassCard";
 import {
-  getExpenses, getDailySpendingData, getPredictedDailyData,
+  getDailySpendingData, getPredictedDailyData,
   predictMonthlySpending, getCategoryTotals, getMonthlySpending,
-  getUser, type Expense, type UserData,
+  type Expense, type UserData,
 } from "@/lib/financeUtils";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area, Legend, BarChart, Bar,
@@ -35,11 +37,43 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const AIPrediction: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
-    setExpenses(getExpenses());
-    setUser(getUser());
-  }, []);
+    if (!authUser) return;
+    const load = async () => {
+      const { data: expData } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("user_id", authUser.id);
+      if (expData) {
+        setExpenses(expData.map((e: any) => ({
+          id: e.id,
+          date: e.date,
+          amount: Number(e.amount),
+          category: e.category,
+          mood: e.mood,
+          paymentMode: e.payment_mode,
+          isSubscription: e.is_subscription,
+        })));
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .single();
+      if (profile) {
+        setUser({
+          name: profile.name || "User",
+          email: profile.email || "",
+          monthlyIncome: Number(profile.monthly_income) || 0,
+          hostelRent: Number(profile.hostel_rent) || 0,
+          userType: profile.user_type === "professional" ? "professional" : "student",
+        });
+      }
+    };
+    load();
+  }, [authUser]);
 
   const predicted = useMemo(() => predictMonthlySpending(expenses), [expenses]);
   const actualMonthly = useMemo(() => getMonthlySpending(expenses), [expenses]);
