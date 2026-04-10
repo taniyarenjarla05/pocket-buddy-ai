@@ -14,7 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      budget_limits: {
+        Row: {
+          created_at: string
+          daily_limit: number
+          id: string
+          savings_goal: number
+          updated_at: string
+          user_id: string
+          weekly_limit: number
+        }
+        Insert: {
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          savings_goal?: number
+          updated_at?: string
+          user_id: string
+          weekly_limit?: number
+        }
+        Update: {
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          savings_goal?: number
+          updated_at?: string
+          user_id?: string
+          weekly_limit?: number
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          id: string
+          is_subscription: boolean
+          mood: string
+          payment_mode: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          id?: string
+          is_subscription?: boolean
+          mood?: string
+          payment_mode?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          id?: string
+          is_subscription?: boolean
+          mood?: string
+          payment_mode?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          hostel_rent: number
+          id: string
+          monthly_income: number
+          name: string
+          updated_at: string
+          user_id: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          hostel_rent?: number
+          id?: string
+          monthly_income?: number
+          name?: string
+          updated_at?: string
+          user_id: string
+          user_type?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          hostel_rent?: number
+          id?: string
+          monthly_income?: number
+          name?: string
+          updated_at?: string
+          user_id?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
