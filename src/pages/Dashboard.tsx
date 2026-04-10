@@ -7,7 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import GlassCard from "@/components/GlassCard";
 import {
   getUser, getExpenses, getMonthlySpending, getTodaySpending,
-  getAlertCount, getSmartInsights, getBudgetLimits, getWeekSpending,
+  getSmartInsights, getBudgetLimits, getWeekSpending,
   loadSampleData, getYearlySpending, getSavingsTips,
   type Expense, type UserData,
 } from "@/lib/financeUtils";
@@ -46,6 +46,7 @@ const Dashboard: React.FC = () => {
   const monthlySpent = getMonthlySpending(expenses);
   const yearlySpent = getYearlySpending(expenses);
   const savings = user.monthlyIncome - (user.hostelRent || 0) - monthlySpent;
+  const availableBalance = user.monthlyIncome - (user.hostelRent || 0) - monthlySpent;
   const todaySpent = getTodaySpending(expenses);
   const weekSpent = getWeekSpending(expenses);
   const limits = getBudgetLimits();
@@ -59,10 +60,10 @@ const Dashboard: React.FC = () => {
   const timeStr = time.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
 
   const statCards = [
-    { icon: Wallet, label: "Balance", value: `₹${(user.monthlyIncome - monthlySpent).toLocaleString()}`, color: "text-primary" },
-    { icon: TrendingDown, label: `${monthName} Spent`, value: `₹${monthlySpent.toLocaleString()}`, color: "text-accent" },
-    { icon: PiggyBank, label: "Savings", value: `₹${Math.max(0, savings).toLocaleString()}`, color: "text-success" },
-    { icon: AlertTriangle, label: "Alerts", value: String(getAlertCount()), color: "text-warning" },
+    { icon: Wallet, label: "Balance", value: `₹${Math.max(0, availableBalance).toLocaleString()}`, color: "text-primary" },
+    { icon: TrendingDown, label: `${monthName} Spend`, value: `₹${monthlySpent.toLocaleString()}`, color: "text-accent" },
+    { icon: TrendingUp, label: `${now.getFullYear()} Total`, value: `₹${yearlySpent.toLocaleString()}`, color: "text-secondary" },
+    { icon: PiggyBank, label: "Savings Left", value: `₹${Math.max(0, savings).toLocaleString()}`, color: "text-success" },
   ];
 
   return (
@@ -105,15 +106,6 @@ const Dashboard: React.FC = () => {
             </GlassCard>
           ))}
         </div>
-
-        {/* Yearly spending */}
-        <GlassCard>
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-5 h-5 text-secondary" />
-            <span className="font-heading font-semibold text-foreground text-sm">Yearly Spending ({now.getFullYear()})</span>
-          </div>
-          <p className="text-2xl font-bold font-heading text-secondary">₹{yearlySpent.toLocaleString()}</p>
-        </GlassCard>
 
         {/* Budget alerts */}
         {(dailyOver || weeklyOver) && (

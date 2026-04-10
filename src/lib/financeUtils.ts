@@ -25,9 +25,32 @@ const EXPENSES_KEY = "mypocket_expenses";
 const LIMITS_KEY = "mypocket_limits";
 const ALERTS_KEY = "mypocket_alerts";
 
+export function toDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function alignDateToCurrentYear(date: string): string {
+  const [, month, day] = date.split("-");
+  return `${new Date().getFullYear()}-${month}-${day}`;
+}
+
 export function getUser(): UserData | null {
   const d = localStorage.getItem("mypocket_user");
-  return d ? JSON.parse(d) : null;
+  if (!d) return null;
+
+  const parsed = JSON.parse(d);
+
+  return {
+    name: parsed.name || "User",
+    email: parsed.email || "",
+    monthlyIncome: Number(parsed.monthlyIncome) || 0,
+    hostelRent: Number(parsed.hostelRent) || 0,
+    userType: parsed.userType === "professional" ? "professional" : "student",
+  };
 }
 
 export function getExpenses(): Expense[] {
@@ -80,7 +103,7 @@ export function getMonthlySpending(expenses: Expense[], month?: number): number 
 }
 
 export function getTodaySpending(expenses: Expense[]): number {
-  const today = new Date().toISOString().split("T")[0];
+  const today = toDateKey(new Date());
   return expenses.filter((e) => e.date === today).reduce((s, e) => s + e.amount, 0);
 }
 
@@ -226,25 +249,31 @@ export function getSavingsTips(expenses: Expense[], user: UserData): string[] {
 
   const sorted = Object.entries(cats).sort(([, a], [, b]) => b - a);
   if (sorted[0]) {
-    const pct = Math.round((sorted[0][1] / total) * 100);
-    if (pct > 30) tips.push(`Cut ${sorted[0][0]} spending (${pct}% of total) — try reducing by 20%`);
+    const [topCategory, topAmount] = sorted[0];
+    const pct = Math.round((topAmount / total) * 100);
+    if (pct > 28) {
+      const possibleSave = Math.round(topAmount * 0.15);
+      tips.push(`${topCategory} is taking ₹${topAmount.toLocaleString()} (${pct}% of your spend) — trimming it by 15% can save about ₹${possibleSave.toLocaleString()}`);
+    }
   }
 
   const subs = expenses.filter((e) => e.isSubscription);
   if (subs.length > 0) {
     const subTotal = subs.reduce((s, e) => s + e.amount, 0);
-    tips.push(`Review subscriptions — ₹${subTotal.toLocaleString()} spent on recurring costs`);
+    tips.push(`Subscriptions are costing ₹${subTotal.toLocaleString()} — canceling unused recurring payments will free up fixed monthly money`);
   }
 
   if (cats["Shopping"] && cats["Shopping"] > total * 0.2) {
-    tips.push("Reduce impulse shopping — set a weekly shopping budget");
+    tips.push(`Shopping alone is ₹${cats["Shopping"].toLocaleString()} — set a weekly cap to avoid impulse buys`);
   }
   if (cats["Food"] && cats["Food"] > total * 0.35) {
-    tips.push("Cook more meals at home to cut food spending");
+    const foodPct = Math.round((cats["Food"] / total) * 100);
+    tips.push(`Food is ${foodPct}% of your spending — a few home-cooked meals each week can cut this category fast`);
   }
 
   if (user.userType === "student") {
-    tips.push("Use student discounts and campus facilities to save");
+    const safeDaily = Math.max(0, Math.round((user.monthlyIncome - user.hostelRent) / 30));
+    tips.push(`As a student, aim to keep flexible spending near ₹${safeDaily.toLocaleString()} per day after rent and use student discounts wherever possible`);
   }
 
   if (tips.length === 0) tips.push("You're doing great! Keep tracking to find more savings.");
@@ -261,7 +290,7 @@ export async function loadSampleData(): Promise<Expense[]> {
       const [date, amount, category, mood, payment_mode, is_subscription] = line.split(",");
       return {
         id: crypto.randomUUID(),
-        date,
+        date: alignDateToCurrentYear(date),
         amount: Number(amount),
         category: category === "Transport" ? "Travel" : category,
         mood,
