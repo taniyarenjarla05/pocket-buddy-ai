@@ -1,46 +1,88 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, LogOut, Settings, Wallet, Target } from "lucide-react";
+import { LogOut, Settings, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import GlassCard from "@/components/GlassCard";
-import { getUser, getBudgetLimits, setBudgetLimits, getExpenses, getAlertCount, type UserData } from "@/lib/financeUtils";
+import { type UserData } from "@/lib/financeUtils";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user: authUser, signOut } = useAuth();
   const [user, setUser] = useState<UserData | null>(null);
-  const [limits, setLimits] = useState(getBudgetLimits());
+  const [limits, setLimits] = useState({ daily: 1000, weekly: 5000 });
   const [editLimits, setEditLimits] = useState(false);
-  const [savingsGoal, setSavingsGoal] = useState(localStorage.getItem("mypocket_savings_goal") || "");
+  const [savingsGoal, setSavingsGoal] = useState("");
+  const [totalExpenses, setTotalExpenses] = useState(0);
 
   useEffect(() => {
-    const u = getUser();
-    if (!u) { navigate("/"); return; }
-    setUser(u);
-  }, [navigate]);
+    if (!authUser) { navigate("/"); return; }
+    const load = async () => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .single();
+      if (profile) {
+        setUser({
+          name: profile.name || "User",
+          email: profile.email || authUser.email || "",
+          monthlyIncome: Number(profile.monthly_income) || 0,
+          hostelRent: Number(profile.hostel_rent) || 0,
+          userType: profile.user_type === "professional" ? "professional" : "student",
+        });
+      }
+      const { data: bl } = await supabase
+        .from("budget_limits")
+        .select("*")
+        .eq("user_id", authUser.id)
+        .single();
+      if (bl) {
+        setLimits({ daily: Number(bl.daily_limit), weekly: Number(bl.weekly_limit) });
+        setSavingsGoal(String(Number(bl.savings_goal) || ""));
+      }
+      const { data: exps } = await supabase
+        .from("expenses")
+        .select("amount")
+        .eq("user_id", authUser.id);
+      if (exps) setTotalExpenses(exps.reduce((s: number, e: any) => s + Number(e.amount), 0));
+    };
+    load();
+  }, [authUser, navigate]);
 
-  const handleSaveLimits = () => {
-    setBudgetLimits(limits);
+  const handleSaveLimits = async () => {
+    if (!authUser) return;
+    await supabase.from("budget_limits").upsert({
+      user_id: authUser.id,
+      daily_limit: limits.daily,
+      weekly_limit: limits.weekly,
+      savings_goal: Number(savingsGoal) || 0,
+    }, { onConflict: "user_id" });
     setEditLimits(false);
     toast({ title: "Budget limits updated ✅" });
   };
 
-  const handleSaveGoal = () => {
-    localStorage.setItem("mypocket_savings_goal", savingsGoal);
+  const handleSaveGoal = async () => {
+    if (!authUser) return;
+    await supabase.from("budget_limits").upsert({
+      user_id: authUser.id,
+      daily_limit: limits.daily,
+      weekly_limit: limits.weekly,
+      savings_goal: Number(savingsGoal) || 0,
+    }, { onConflict: "user_id" });
     toast({ title: "Savings goal set! 🎯" });
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("mypocket_user");
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
   };
 
   if (!user) return null;
-
-  const totalExpenses = getExpenses().reduce((s, e) => s + e.amount, 0);
-  const alertCount = getAlertCount();
 
   return (
     <div className="flex flex-col min-h-full">
@@ -72,10 +114,6 @@ const Profile: React.FC = () => {
           <GlassCard>
             <p className="text-[10px] text-muted-foreground">Total Spent</p>
             <p className="text-sm font-bold font-heading text-accent">₹{totalExpenses.toLocaleString()}</p>
-          </GlassCard>
-          <GlassCard>
-            <p className="text-[10px] text-muted-foreground">Alerts</p>
-            <p className="text-sm font-bold font-heading text-warning">{alertCount}</p>
           </GlassCard>
         </div>
 

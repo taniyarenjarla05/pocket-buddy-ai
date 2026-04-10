@@ -5,18 +5,39 @@ import BottomNav from "@/components/BottomNav";
 import GlassCard from "@/components/GlassCard";
 import { Calendar } from "@/components/ui/calendar";
 import { getExpenses, toDateKey, type Expense } from "@/lib/financeUtils";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const categoryEmojis: Record<string, string> = {
   Food: "🍔", Travel: "🚗", Shopping: "🛍️", Bills: "📄", Others: "📦", Entertainment: "🎬",
 };
 
 const CalendarView: React.FC = () => {
+  const { user: authUser } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   useEffect(() => {
-    setExpenses(getExpenses());
-  }, []);
+    if (!authUser) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from("expenses")
+        .select("*")
+        .eq("user_id", authUser.id);
+      if (data) {
+        setExpenses(data.map((e: any) => ({
+          id: e.id,
+          date: e.date,
+          amount: Number(e.amount),
+          category: e.category,
+          mood: e.mood,
+          paymentMode: e.payment_mode,
+          isSubscription: e.is_subscription,
+        })));
+      }
+    };
+    load();
+  }, [authUser]);
 
   const dateStr = selectedDate ? toDateKey(selectedDate) : "";
   const dayExpenses = expenses.filter((e) => e.date === dateStr);
