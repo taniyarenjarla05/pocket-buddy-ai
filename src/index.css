@@ -6,54 +6,54 @@
 
 @layer base {
   :root {
-    --background: 260 30% 8%;
-    --foreground: 240 20% 90%;
+    --background: 34 54% 91%;
+    --foreground: 284 32% 18%;
 
-    --card: 265 25% 13%;
-    --card-foreground: 240 20% 90%;
+    --card: 34 44% 96%;
+    --card-foreground: 284 32% 18%;
 
-    --popover: 265 25% 13%;
-    --popover-foreground: 240 20% 90%;
+    --popover: 34 44% 96%;
+    --popover-foreground: 284 32% 18%;
 
-    --primary: 270 60% 65%;
-    --primary-foreground: 260 30% 8%;
+    --primary: 273 63% 54%;
+    --primary-foreground: 34 60% 97%;
 
-    --secondary: 280 45% 55%;
-    --secondary-foreground: 240 20% 96%;
+    --secondary: 312 35% 40%;
+    --secondary-foreground: 34 60% 97%;
 
-    --muted: 260 20% 18%;
-    --muted-foreground: 250 15% 55%;
+    --muted: 32 34% 84%;
+    --muted-foreground: 285 14% 40%;
 
-    --accent: 340 75% 60%;
-    --accent-foreground: 240 20% 96%;
+    --accent: 331 46% 52%;
+    --accent-foreground: 34 60% 97%;
 
-    --destructive: 0 72% 55%;
-    --destructive-foreground: 240 20% 96%;
+    --destructive: 2 67% 52%;
+    --destructive-foreground: 34 60% 97%;
 
-    --border: 260 20% 22%;
-    --input: 260 20% 18%;
-    --ring: 270 60% 65%;
+    --border: 286 23% 77%;
+    --input: 32 38% 88%;
+    --ring: 273 63% 54%;
 
     --radius: 1rem;
 
-    --success: 142 60% 50%;
-    --warning: 38 92% 60%;
-    --info: 210 80% 60%;
+    --success: 148 33% 42%;
+    --warning: 34 78% 56%;
+    --info: 248 52% 58%;
 
-    --glass-bg: 265 25% 14%;
-    --glass-border: 260 20% 26%;
+    --glass-bg: 36 52% 98%;
+    --glass-border: 286 25% 72%;
 
-    --gradient-start: 280 50% 50%;
-    --gradient-end: 260 60% 70%;
+    --gradient-start: 272 66% 56%;
+    --gradient-end: 314 46% 66%;
 
-    --sidebar-background: 260 25% 10%;
-    --sidebar-foreground: 240 20% 90%;
-    --sidebar-primary: 270 60% 65%;
-    --sidebar-primary-foreground: 260 30% 8%;
-    --sidebar-accent: 260 20% 18%;
-    --sidebar-accent-foreground: 240 20% 90%;
-    --sidebar-border: 260 20% 22%;
-    --sidebar-ring: 270 60% 65%;
+    --sidebar-background: 34 44% 93%;
+    --sidebar-foreground: 284 32% 18%;
+    --sidebar-primary: 273 63% 54%;
+    --sidebar-primary-foreground: 34 60% 97%;
+    --sidebar-accent: 32 34% 84%;
+    --sidebar-accent-foreground: 284 32% 18%;
+    --sidebar-border: 286 23% 77%;
+    --sidebar-ring: 273 63% 54%;
   }
 }
 
@@ -65,6 +65,11 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+    background-image:
+      radial-gradient(circle at top left, hsl(var(--primary) / 0.22), transparent 32%),
+      radial-gradient(circle at bottom right, hsl(var(--secondary) / 0.18), transparent 28%),
+      linear-gradient(180deg, hsl(var(--background)), hsl(32 52% 88%));
+    background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -74,17 +79,19 @@
 
 @layer utilities {
   .glass {
-    background: hsl(var(--glass-bg) / 0.6);
+    background: hsl(var(--glass-bg) / 0.72);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid hsl(var(--glass-border) / 0.3);
+    border: 1px solid hsl(var(--glass-border) / 0.45);
+    box-shadow: 0 18px 45px -24px hsl(var(--primary) / 0.25);
   }
 
   .glass-strong {
-    background: hsl(var(--glass-bg) / 0.8);
+    background: hsl(var(--glass-bg) / 0.9);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
-    border: 1px solid hsl(var(--glass-border) / 0.4);
+    border: 1px solid hsl(var(--glass-border) / 0.55);
+    box-shadow: 0 24px 50px -28px hsl(var(--secondary) / 0.28);
   }
 
   .gradient-primary {
@@ -107,8 +114,8 @@
   }
 
   .phone-shadow {
-    box-shadow: 0 25px 60px -15px hsl(260 40% 5% / 0.8),
-                0 0 40px hsl(var(--primary) / 0.1);
+    box-shadow: 0 30px 70px -20px hsl(var(--secondary) / 0.22),
+                0 0 50px hsl(var(--primary) / 0.12);
   }
 
   .scrollbar-hide {

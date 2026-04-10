@@ -4,7 +4,7 @@ import { CalendarDays } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import GlassCard from "@/components/GlassCard";
 import { Calendar } from "@/components/ui/calendar";
-import { getExpenses, type Expense } from "@/lib/financeUtils";
+import { getExpenses, toDateKey, type Expense } from "@/lib/financeUtils";
 
 const categoryEmojis: Record<string, string> = {
   Food: "🍔", Travel: "🚗", Shopping: "🛍️", Bills: "📄", Others: "📦", Entertainment: "🎬",
@@ -18,17 +18,21 @@ const CalendarView: React.FC = () => {
     setExpenses(getExpenses());
   }, []);
 
-  const dateStr = selectedDate ? selectedDate.toISOString().split("T")[0] : "";
+  const dateStr = selectedDate ? toDateKey(selectedDate) : "";
   const dayExpenses = expenses.filter((e) => e.date === dateStr);
   const dayTotal = dayExpenses.reduce((s, e) => s + e.amount, 0);
 
   // Get dates that have expenses for highlighting
   const expenseDates = new Set(expenses.map((e) => e.date));
   const modifiers = {
-    hasExpense: (date: Date) => expenseDates.has(date.toISOString().split("T")[0]),
+    hasExpense: (date: Date) => expenseDates.has(toDateKey(date)),
   };
   const modifiersStyles = {
-    hasExpense: { backgroundColor: "hsl(270 60% 65% / 0.2)", borderRadius: "50%" },
+    hasExpense: {
+      backgroundColor: "hsl(var(--primary) / 0.18)",
+      border: "1px solid hsl(var(--primary) / 0.28)",
+      borderRadius: "50%",
+    },
   };
 
   // Category breakdown for selected day
@@ -36,6 +40,8 @@ const CalendarView: React.FC = () => {
   dayExpenses.forEach((e) => {
     catTotals[e.category] = (catTotals[e.category] || 0) + e.amount;
   });
+
+  const topCategory = Object.entries(catTotals).sort(([, a], [, b]) => b - a)[0];
 
   return (
     <div className="flex flex-col min-h-full">
@@ -53,7 +59,7 @@ const CalendarView: React.FC = () => {
             onSelect={setSelectedDate}
             modifiers={modifiers}
             modifiersStyles={modifiersStyles}
-            className="text-foreground"
+            className="text-foreground pointer-events-auto"
           />
         </GlassCard>
 
@@ -67,9 +73,24 @@ const CalendarView: React.FC = () => {
 
           {dayExpenses.length > 0 ? (
             <>
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="rounded-xl bg-background/70 p-3">
+                  <p className="text-[10px] text-muted-foreground">Total Spent</p>
+                  <p className="mt-1 text-sm font-bold font-heading text-accent">₹{dayTotal.toLocaleString()}</p>
+                </div>
+                <div className="rounded-xl bg-background/70 p-3">
+                  <p className="text-[10px] text-muted-foreground">Entries</p>
+                  <p className="mt-1 text-sm font-bold font-heading text-primary">{dayExpenses.length}</p>
+                </div>
+                <div className="rounded-xl bg-background/70 p-3">
+                  <p className="text-[10px] text-muted-foreground">Top Category</p>
+                  <p className="mt-1 text-sm font-bold font-heading text-secondary">{topCategory?.[0] || "-"}</p>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-muted-foreground">Total Spent</span>
-                <span className="text-lg font-bold font-heading text-accent">₹{dayTotal.toLocaleString()}</span>
+                <span className="text-xs text-muted-foreground">Category Breakdown</span>
+                <span className="text-xs font-medium text-primary">Tap dates to see that day summary</span>
               </div>
 
               {/* Category breakdown */}
